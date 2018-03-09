@@ -1,0 +1,1370 @@
+<!-- 页面顶部 -->
+<template id="topmenu">
+    <ul class="topMenu_right clearfix">
+        <li class="topMenu_msg">
+            <span class="topMenu_icon msg active"></span>
+            <span class="msgActive"></span>
+        </li>
+        <li class="topMenu_msg"><span class="topMenu_icon setting active"></span></li>
+        <li class="topMenu_user">
+            Hello ! 赖安娜
+            <span class="topMenu_toBottom"></span>
+        </li>
+    </ul>
+</template>
+<!-- 使用方法:<topmenu :user-name=""></topmenu> -->
+
+<!-- 分页 -->
+<template id="pagination">
+    <nav class="panel-pagination" aria-label="pagination">
+        <ul class="pagination pagination-sm clearfix">
+            <li @click=" controlPage( curPage-1 ) " :class="{disabled: curPage === 1}">
+                <a href="javascript:;" aria-label="Previous"> &lt; </a>
+            </li>
+            <li v-for="page in pages" @click=" controlPage( page ) " :class="{active: curPage === page}">
+                <a href="javascript:;" v-html=" page "></a>
+            </li>
+            <li @click=" controlPage( curPage+1 ) " :class="{disabled: curPage === totalPages}">
+                <a href="javascript:;" aria-label="Next"> &gt; </a>
+            </li>
+        </ul>
+        <span class="page-span">到第 <input type="text" v-model="jumppage" class="input-page"> 页 <button @click=" controlPage( jumppage )" >确定</button></span>
+    </nav>
+</template>
+<!-- 
+<pagination v-if=" database.totalpage " :show-pages=" 5 " :cur-page=" currentPages " :total-pages=" database.totalpage " ref="pagination"></pagination>
+-->
+
+<!--产品中心-->
+<template id="product_page">
+    <div class="main">
+        <div class="product_main">
+            <!--分类-->
+            <div class="topMenu">
+                <topmenu :user-name="赖安娜"></topmenu>
+                <ul class="topMenu_left">
+                    <li class="topMenu_left_item" :class="{active:select.topMenu.current == p.val}" v-for="p in select.topMenu.database" @click="_chooseTopMenu(p)">{{p.name}}</li>
+                    <li class="topMenu_left_bottom"></li>
+                </ul>
+            </div>
+            <div class="product_chooseBox clearfix">
+                <ul class="product_rightBtn product_configure clearfix">
+                    <li @click="_gotoAdd" class="active">
+                        <span class="rightBtnIcon add"></span>添加
+                    </li>
+                    <!-- <li @click="base.rightBtn = 2" :class="{active:base.rightBtn == 2}">
+                        <span class="rightBtnIcon up"></span>上移
+                    </li>
+                    <li @click="base.rightBtn = 3" :class="{active:base.rightBtn == 3}">
+                        <span class="rightBtnIcon down"></span>下移
+                    </li>
+                    <li @click="_productDel()" :class="{active:base.rightBtn == 4}">
+                        <span class="rightBtnIcon del"></span>删除
+                    </li> -->
+                </ul>
+                <template v-if="select.topMenu.current != 3">
+                    <ul class="product_choose clearfix">
+                        <li :class="{active:select.choose1.current == p.val}" v-for="p in select.choose1.database" @click="select.choose1.current = p.val" >{{p.name}}</li>
+                    </ul>
+                    <div class="select_box" :class="{active:select.choose2.active}">
+                        <span @click="select.choose2.active = !select.choose2.active">{{select.choose2.current | eachItem 'choose2'}}</span>
+                        <ul class="select_option" v-if="select.choose2.active">
+                            <li v-for="p in select.choose2.database" @click="_chooseSelect('choose2',p.val)" >{{p.name}}</li>
+                        </ul>
+                    </div>
+                    <div class="select_box" :class="{active:select.choose3.active}">
+                        <span @click="select.choose3.active = !select.choose3.active">{{select.choose3.current | eachItem 'choose3'}}</span>
+                        <ul class="select_option" v-if="select.choose3.active">
+                            <li v-for="p in select.choose3.database" @click="_chooseSelect('choose3',p.val)" >{{p.name}}</li>
+                        </ul>
+                    </div>
+                    <div class="search_box" :class="{active:base.isSearch}">
+                        <input type="text" placeholder="输入产品款号快速搜索" @focus="base.isSearch = true" @blur="base.isSearch = false" v-model="base.style_no">
+                        <span class="searchIcon" @click="_getGoodsData(1)"></span>
+                    </div>
+                    <div class="product_total">共 <span class="red">{{goodsdata.totalrecord}}</span> 件款式产品</div>
+                </template>
+                <template v-if="select.topMenu.current == 3">
+                    <ul class="topMenu_left product_configure_menu uploadPdt_head">
+                        <li class="topMenu_left_item" :class="{active:select.basicConfigure.current == p.val}" v-for="p in select.basicConfigure.database" @click="_chooseMenuTwo(p)">{{p.name}}</li>
+                        <li class="topMenu_left_bottom"></li>
+                    </ul>
+                </template>
+            </div>
+            <!--页面主体-->
+            <div class="product_main clearfix" v-show="select.topMenu.current != 3"> 
+                <div class="product_item_box clearfix">
+                    <div class="product_item" v-for="item in goodsdata.list">
+                        <div class="product_imgBox">
+                            <img :src="item.goods_pic | eachImage" alt="">
+                            <div class="product_imgModal">
+                                <ul class="product_imgModal_item clearfix" :class="{notFinishedGoods:item.goods_mode != 2}">
+                                    <li class="product_imgModalIcon see" @click="_seeGoodsList(item)" v-if="item.goods_mode ==2"></li>
+                                    <li class="product_imgModalIcon edit" @click="_productEdit(item)"></li>
+                                    <li class="product_imgModalIcon del"  @click="_productDel(item.id)"></li>
+                                </ul>
+                            </div>
+                        </div>
+                        <ul class="product_info">
+                            <li class="product_info_no">
+                                <!-- <div class="product_info_num blue">--<span>/件</span></div> -->
+                                {{item.style_no}}
+                            </li>
+                            <li class="product_info_name">{{item.goods_name}}</li>
+                        </ul>
+                        <!-- <ul class="product_label clearfix">
+                            <li :class="'new' | eachLabel $index">新款</li>
+                            <li :class="pop | eachLabel $index">畅销</li>
+                            <li :class="yin | eachLabel $index">银版</li>
+                            <li :class="made | eachLabel $index">定制</li>
+                        </ul> -->
+                        <ul class="product_label clearfix">
+                            <li class="new" v-show="item.goods_new.indexOf('新款')>0">新款</li>
+                            <li class="pop" v-show="item.goods_new.indexOf('畅销') > 0">畅销</li>
+                            <template v-for="config in item.goods_config">
+                                <li class="yin" v-show="config.key_name=='style_sort'&& config.field_value=='有'">银版</li>
+                            </template>
+                            <li class="made" v-show="item.goods_mode">定制</li>
+                        </ul>
+                    </div>
+                    <div class="no_data" v-show="base.showNoDataTips">暂无相关数据</div>
+                </div>
+                <!-- 分页 -->
+                <pagination :show-pages="5" :cur-page=" currentPages " :total-pages="goodsdata.totalpage"
+                    ref="pagination" v-if="goodsdata.totalpage>0"></pagination>
+            </div>
+            <div class="product_main clearfix" v-show="select.topMenu.current == 3">
+                <table class="product_table">
+                    <thead>
+                    <tr>
+                        <th width="5%"><span class="table_check"></span></th>
+                        <th>序号</th>
+                        <th>大分类名称</th>
+                        <th>小分类名称</th>
+                        <th>描述/备注</th>
+                        <th>操作时间</th>
+                        <th>操作员</th>
+                        <th>状态</th>
+                        <th>操作</th>
+                    </tr>
+                    </thead>
+                    <tbody v-for="configclassify in select.configchoose2.database">
+                    <tr>
+                        <td><span class="table_check"></span></td>
+                        <td>{{configclassify.id}}</td>
+                        <!--base.basicConfigureDetail = '1'-->
+                        <td @click="_checkConfigClassify(configclassify.id)">{{configclassify.catename}}<span class="table_show" :class="{active:base.basicConfigureDetail == '1'}"></span></td>
+                        <td>-</td>
+                        <td>{{configclassify.remark}}</td>
+                        <td>{{configclassify.times}}</td>
+                        <td>{{configclassify.adduid}}</td>
+                        <td><span class="table_ok"></span></td>
+                        <!-- <td><span class="table_error"></span></td> -->
+                        <td>
+                            <span class="table_edit"></span>
+                            <span class="table_del"></span>
+                        </td>
+                    </tr>
+                    <template v-for="configclassify1 in select.checkchoose.database">
+                        <tr v-show = "base.basicConfigureDetail == configclassify.id ">
+                            <td><span class="table_check"></span></td>
+                            <td>——{{configclassify1.pid}}-{{configclassify1.id}}</td>
+                            <td>-</td>
+                            <td>{{configclassify1.catename}}</td>
+                            <td>{{configclassify1.remark}}</td>
+                            <td>{{configclassify1.times}}</td>
+                            <td>{{configclassify1.adduid}}</td>
+                            <td><span class="table_ok"></span></td>
+                            <!-- <td><span class="table_error"></span></td> -->
+                            <td>
+                                <span class="table_edit"></span>
+                                <span class="table_del"></span>
+                            </td>
+                        </tr>
+                    </template>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <!-- 弹出框 -->
+    <div class="modal fade product_del" tabindex="-1" role="dialog">
+        <div class="pop-container min">
+            <div class="product_modal">
+                <div class="product_modalHead">确定要删除该款式吗？</div>
+                <div class="product_modalContent">删除款式后将删除所有数据，如需正常显示请保留！</div>
+                <ul class="product_modalBtn">
+                    <li class="sure" @click="_productDelpro">确定</li>
+                    <li data-dismiss="modal">取消</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</template>
+
+<!-- 上传产品 -->
+<template id="uploadPdt_page">
+    <div class="main white">
+        <div class="uploadPdt_box">
+            <!-- 页面顶部 -->
+            <div class="topMenu">
+                <topmenu :user-name="赖安娜"></topmenu>
+                <div class="topMenu_back" onclick="goBack()"><span class="topMenu_backIcon"></span>返回上一层</div>
+            </div>
+            <ul class="topMenu_left uploadPdt_head">
+                <li class="topMenu_left_item" :class="{active:select.topMenu.current == p.val}" v-for="p in select.topMenu.database" @click="_chooseTopMenu(p)">{{p.name}}</li>
+                <li class="topMenu_left_bottom"></li>
+            </ul>
+            <!-- 页面主体 -->
+            <div class="uploadPdt_main" v-show="select.topMenu.current == 0">
+                <div class="uploadPdt_item clearfix">
+                    <div class="uploadPdt_title"><span class="red">*</span> 产品类型</div>
+                    <div class="uploadPdt_content">
+                        <ul class="choose_box clearfix">
+                            <li class="choose_item" :class="{active:select.goods_mode.current == p.val}" v-for="p in select.goods_mode.database" @click="select.goods_mode.current = p.val">
+                                <span class="choose_icon"></span>{{p.name}}
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="uploadPdt_item clearfix">
+                    <div class="uploadPdt_title"><span class="red">*</span> 分类</div>
+                    <div class="uploadPdt_content">
+                        <div class="select_box select_box2" :class="{active:select.category_id1.active}">
+                            <span @click="select.category_id1.active = !select.category_id1.active">{{select.category_id1.current | eachItem 'category_id1'}}</span>
+                            <ul class="select_option" v-show="select.category_id1.active">
+                                <li v-for="p in select.category_id1.database" @click="_chooseSelect('category_id1',p.val)">{{p.name}}</li>
+                            </ul>
+                        </div>
+                        <div class="select_box select_box2" :class="{active:select.category_id2.active}">
+                            <span @click="select.category_id2.active = !select.category_id2.active">{{select.category_id2.current | eachItem 'category_id2'}}</span>
+                            <ul class="select_option" v-show="select.category_id2.active">
+                                <li v-for="p in select.category_id2.database" @click="_chooseSelect('category_id2',p.val)">{{p.name}}</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <template v-if="base.showContent">
+                <div class="uploadPdt_other clearfix">
+                    <div class="uploadPdt_item left clearfix">
+                        <div class="uploadPdt_title"><span class="red">*</span> 款号</div>
+                        <div class="uploadPdt_content">
+                            <input class="uploadInput" type="text" v-model="base.param.style_no" placeholder="请输入款号">
+                        </div>
+                    </div>
+                    <div class="uploadPdt_item left clearfix" v-show="select.goods_mode.current != 1">
+                        <div class="uploadPdt_title"><span class="red">*</span> 货号</div>
+                        <div class="uploadPdt_content">
+                            <input class="uploadInput" type="text" v-model="base.param.goods_no" placeholder="请输入货号">
+                        </div>
+                    </div>
+                </div>
+                <div class="uploadPdt_item clearfix">
+                    <div class="uploadPdt_title"><span class="red">*</span> 品名</div>
+                    <div class="uploadPdt_content">
+                        <input class="uploadInput l" type="text" v-model="base.param.goods_name" placeholder="请输入商品名称">
+                    </div>
+                </div>
+                <div class="uploadPdt_item clearfix">
+                    <div class="uploadPdt_title">专区</div>
+                    <div class="uploadPdt_content">
+                        <ul class="uploadPdt_special clearfix">
+                            <li :class="{active:select.special_id.current == p.val}" v-for="p in select.special_id.database" @click="select.special_id.current = p.val">{{p.name}}</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="uploadPdt_item clearfix">
+                    <div class="uploadPdt_title"><span class="red">*</span> 材质</div>
+                    <div class="uploadPdt_content">
+                        <ul class="check_box clearfix">
+                            <li :class="p.val | eachActive 'material'" v-for="p in select.material.database" @click="_chooseCheck('material',p.val)"><span class="check_icon"></span>{{p.name}}</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="uploadPdt_item clearfix">
+                    <div class="uploadPdt_title"><span class="red">*</span> 金重</div>
+                    <div class="uploadPdt_content">
+                        <div class="uploadPdt_gold" :class="{active:base.inputFoucs == 1}">
+                            <span class="left">PT950</span>
+                            <input type="text" v-model="base.param.goldWeigth_pt950" @focus="base.inputFoucs = 1" @blur="base.inputFoucs =''" data-inputFocus="1">
+                            <span class="right">/g</span>
+                        </div>
+                        <div class="uploadPdt_gold" :class="{active:base.inputFoucs == 2}">
+                            <span class="left">18K</span>
+                            <input type="text" v-model="base.param.goldWeigth_18K" @focus="base.inputFoucs = 2" @blur="base.inputFoucs =''" data-inputFocus="2">
+                            <span class="right">/g</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="uploadPdt_item clearfix">
+                    <div class="uploadPdt_title"><span class="red">*</span> 空托价格</div>
+                    <div class="uploadPdt_content">
+                        <div class="uploadPdt_gold" :class="{active:base.inputFoucs == 3}">
+                            <span class="left">PT950</span>
+                            <input type="text" v-model="base.param.minprice" @focus="base.inputFoucs = 3" @blur="base.inputFoucs =''" data-inputFocus="3">
+                            <span class="right">/元</span>
+                        </div>
+                        <div class="uploadPdt_gold" :class="{active:base.inputFoucs == 4}">
+                            <span class="left">18K</span>
+                            <input type="text" v-model="base.param.maxprice" @focus="base.inputFoucs = 4" @blur="base.inputFoucs =''" data-inputFocus="4">
+                            <span class="right">/元</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="uploadPdt_item clearfix" v-show="select.category_id2.current != 4">
+                    <div class="uploadPdt_title"><span class="red">*</span>{{(select.category_id2.current==6||select.category_id2.current==7)?" 链长":" 手寸"}}</div>
+                    <div class="uploadPdt_content">
+                        <input class="uploadInput l" type="text" v-model="base.goods_size | eachSize 'goods_size'">
+                            <span class="tips" v-show="base.tipsShow">（系统默认手寸为8#-28#，多个尺寸用"/"隔开，例如：8 / 9 / 10）</span>
+                    </div>
+                </div>
+                <div class="uploadPdt_item clearfix">
+                    <div class="uploadPdt_title">镶口</div>
+                    <div class="uploadPdt_content">
+                        <input class="uploadInput l" type="text" v-model="base.param.s_weight | eachSize 's_weight'">
+                        <span class="tips" v-show="base.tipsShow">（系统默认镶口，多个镶口用","隔开，例如：0.3ct，0.5ct）</span>
+                    </div>
+                </div>
+                <div class="uploadPdt_item clearfix">
+                    <div class="uploadPdt_title">主石形状</div>
+                    <div class="uploadPdt_content">
+                        <ul class="choose_box clearfix">
+                            <li class="choose_item s" :class="{active:select.stone_shape.current == p.val}" v-for="p in select.stone_shape.database" @click="select.stone_shape.current = p.val">
+                                <span class="choose_icon"></span>{{p.name}}
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="uploadPdt_other clearfix" v-show="select.goods_mode.current == 2">
+                    <div class="uploadPdt_item left clearfix">
+                        <div class="uploadPdt_title">主石种类</div>
+                        <div class="uploadPdt_content">
+                            <input class="uploadInput" type="text" v-model="base.param.stone_type" placeholder="请输入主石种类">
+                        </div>
+                    </div>
+                    <div class="uploadPdt_item left clearfix">
+                        <div class="uploadPdt_title">主石重量</div>
+                        <div class="uploadPdt_content">
+                            <input class="uploadInput" type="text" v-model="base.param.stone_weight" placeholder="请输入主石重量">
+                            <span class="rightIn">/Ct</span>
+                        </div>
+                    </div>
+                    <div class="uploadPdt_item left clearfix">
+                        <div class="uploadPdt_title">颜色/净度</div>
+                        <div class="uploadPdt_content">
+                            <input class="uploadInput" type="text" v-model="base.param.stone_clarity" placeholder="请输入主石颜色/净度">
+                            <span class="tips">（颜色与净度之间用"/"隔开，例如：H / VVS1）</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="uploadPdt_other clearfix">
+                    <div class="uploadPdt_destone left" v-for="p in base.param.destone_type">
+                        <div class="uploadPdt_item left clearfix">
+                            <div class="uploadPdt_title">副石种类</div>
+                            <div class="uploadPdt_content">
+                                <input class="uploadInput"type="text" v-model="p.type" placeholder="请输入副石种类">
+                            </div>
+                        </div>
+                        <div class="uploadPdt_item left clearfix">
+                            <div class="uploadPdt_title">副石重量</div>
+                            <div class="uploadPdt_content">
+                                <input class="uploadInput" type="text" v-model="p.weight" placeholder="请输入副石重量">
+                                    <span class="rightIn">/Ct</span>
+                            </div>
+                        </div>
+                        <div class="uploadPdt_item left clearfix">
+                            <div class="uploadPdt_title">副石数量</div>
+                            <div class="uploadPdt_content">
+                                <input class="uploadInput" type="text" v-model="p.num" placeholder="请输入副石数量">
+                                <span class="rightIn">/颗</span>
+                            </div>
+                        </div>
+                        <span class="removeImg removeDestone" @click="_removeImg('destone_type',$index)" v-if="$index"></span>
+                    </div>
+                    <div class="uploadPdt_addBtn left" @click="_addDestone()" v-show="select.goods_mode.current == 2"><span class="add"></span>添加副石规格</div>
+                </div>
+                <div class="uploadPdt_other clearfix" v-show="select.goods_mode.current == 2">
+                    <div class="uploadPdt_item left clearfix uploadPdt_item_cert">
+                        <div class="uploadPdt_title">证书</div>
+                        <div class="uploadPdt_content uploadPdt_cert">
+                            <div class="uploadPdt_cert" v-for="p in base.param.cert_no">
+                                <div class="select_box select_box2" :class="{active:select.cert.active}" @click="select.cert.active = !select.cert.active">
+                                    {{p.cert | eachItem 'cert'}}
+                                    <ul class="select_option" v-show="select.cert.active">
+                                        <li v-for="b in select.cert.database" @click="p.cert = b.val">{{b.name}}</li>
+                                    </ul>
+                                </div>
+                                <input class="uploadInput" type="text" v-model="p.cert_no" placeholder="请输入证书编号">
+                                <span class="removeImg removeOther" @click="_removeImg('cert_no',$index)" v-if="$index"></span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="uploadPdt_addBtn left" @click="_addCert()"><span class="add"></span>添加证书</div>
+                </div>
+                <div class="uploadPdt_other clearfix">
+                    <div class="uploadPdt_item l left clearfix">
+                        <div class="uploadPdt_title"><span class="red">*</span> 款式图片</div>
+                        <div class="uploadPdt_content">
+                            <div class="uploadPdt_imgBox l">
+                                <div>
+                                    <div class="uploadPdt_imgBox_btn">
+                                        点击上传
+                                        <input multiple type="file" @change="_selectBanner($event.currentTarget.files,'goods_pic_all')" v-if="base.param.goods_pic_all.length!=6">
+                                    </div>
+                                    <span class="tips">（最佳尺寸320*300PX；最多可上传6张图片，缩略图自动选择第一张呈现）</span>
+                                </div>
+                                <ul class="uploadPdt_imgBox_main clearfix">
+                                    <li v-for="p in 6">
+                                        <img src="img/index/noImg.png" v-if="!base.param.goods_pic_all[p]">
+                                        <img :src="base.param.goods_pic_all[p] | eachImage" v-if="base.param.goods_pic_all[p]">
+                                        <span class="removeImg" @click="_removeImg('goods_pic_all',$index)" v-if="base.param.goods_pic_all[p]"></span>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="uploadPdt_item l left clearfix">
+                        <div class="uploadPdt_title">视频拍摄</div>
+                        <div class="uploadPdt_content">
+                            <div class="uploadPdt_imgBox">
+                                <div>
+                                    <div class="uploadPdt_imgBox_btn" id="video_upload_btn" @click="_selectRaido()">
+                                        点击上传
+                                    </div>
+                                    <span class="tips">（大小不超过30M）</span>
+                                </div>
+                                <ul class="uploadPdt_imgBox_main clearfix">
+                                    <li>
+                                        <img src="img/index/noImg.png" v-if="!base.param.goods_video">
+                                        <video :src="base.param.goods_video" controls="controls"  v-if="base.param.goods_video">您的浏览器不支持 video 标签。</video>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="uploadPdt_other clearfix">
+                    <div class="uploadPdt_item left clearfix">
+                        <div class="uploadPdt_title">供应商/品牌</div>
+                        <div class="uploadPdt_content">
+                            <input class="uploadInput" type="text" v-model="base.param.factory" placeholder="请输入供应商/品牌">
+                        </div>
+                    </div>
+                    <div class="uploadPdt_item left clearfix">
+                        <div class="uploadPdt_title">供应商/品牌款号</div>
+                        <div class="uploadPdt_content">
+                            <input class="uploadInput" type="text" v-model="base.param.factory_no" placeholder="请输入供应商/品牌款号">
+                        </div>
+                    </div>
+                </div>
+                <div class="uploadPdt_other clearfix">
+                    <div class="uploadPdt_item left clearfix">
+                        <div class="uploadPdt_title">呈现区域</div>
+                        <div class="uploadPdt_content">
+                            <ul class="choose_box clearfix">
+                                <li class="choose_item m" :class="{active:select.style_region.current == p.val}" v-for="p in select.style_region.database" @click="select.style_region.current = p.val">
+                                    <span class="choose_icon"></span>{{p.name}}
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="uploadPdt_item left clearfix">
+                        <div class="uploadPdt_title">银版</div>
+                        <div class="uploadPdt_content">
+                            <ul class="choose_box clearfix">
+                                <li class="choose_item" :class="{active:select.style_sort.current == p.val}" v-for="p in select.style_sort.database" @click="select.style_sort.current = p.val">
+                                    <span class="choose_icon"></span>{{p.name}}
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="uploadPdt_item left clearfix">
+                        <div class="uploadPdt_title">推荐款式</div>
+                        <div class="uploadPdt_content">
+                            <ul class="check_box clearfix">
+                                <li :class="p.val | eachActive 'goods_new'" v-for="p in select.goods_new.database" @click="_chooseCheck('goods_new',p.val)">
+                                    <span class="check_icon"></span>{{p.name}}
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                    <div class="uploadPdt_other clearfix">
+                        <div class="uploadPdt_item left clearfix">
+                            <div class="uploadPdt_title">爪型</div>
+                            <div class="uploadPdt_content">
+                                <ul class="choose_box clearfix">
+                                    <li class="choose_item m" :class="{active:select.style_claw.current == p.val}" v-for="p in select.style_claw.database"
+                                        @click="select.style_claw.current = p.val">
+                                        <span class="choose_icon"></span>{{p.name}}
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="uploadPdt_other clearfix">
+                        <div class="uploadPdt_item left clearfix">
+                            <div class="uploadPdt_title">镶口方式</div>
+                            <div class="uploadPdt_content">
+                                <ul class="choose_box clearfix">
+                                    <li class="choose_item m" :class="{active:select.scoop_type.current == p.val}" v-for="p in select.scoop_type.database"
+                                        @click="select.scoop_type.current = p.val">
+                                        <span class="choose_icon"></span>{{p.name}}
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="uploadPdt_other clearfix">
+                        <div class="uploadPdt_item left clearfix">
+                            <div class="uploadPdt_title">展示区域</div>
+                            <div class="uploadPdt_content">
+                                <ul class="check_box clearfix">
+                                    <li :class="p.val | eachActive 'show_region'" v-for="p in select.show_region.database" @click="_chooseCheckRegion('show_region',p.val)">
+                                        <span class="check_icon"></span>{{p.name}}
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                <div class="uploadPdt_item clearfix">
+                    <div class="uploadPdt_title">款式关键字</div>
+                    <div class="uploadPdt_content">
+                        <!-- <ul class="uploadPdt_keyword clearfix">
+                            <li class="uploadPdt_keyword_item" :class="{active:select.key_name.current == p.val}" v-for="p in select.key_name.database">
+                                <div contenteditable="true" @click="select.key_name.current = p.val">{{p.name}}<span class="removeWord" @click="_removeKeyword($index)" @blur="select.key_name.currentEdit =''"></span></div>
+                            </li>
+                        </ul> -->
+                        <input class="uploadInput" type="text" v-model="select.key_name.current | eachSize" placeholder="请输入关键字，多个关键字用','隔开" style="width:1080px;">
+                    </div>
+                </div>
+                <div class="uploadPdt_item l clearfix">
+                    <div class="uploadPdt_title">款式描述（FAB）</div>
+                    <div class="uploadPdt_content">
+                        <textarea class="uploadPdt_textarea" v-model="base.param.goods_content"></textarea>
+                    </div>
+                </div>
+                <ul class="uploadPdt_btn">
+                    <li class="reset" @click="_reset()">重置</li>
+                    <li class="save" @click="_save()">保存</li>
+                </ul>
+                </template>
+            </div>
+            <div class="uploadPdt_main s" v-show="select.topMenu.current == 1">
+                <div class="uploadPdt_batch_box">
+                    <ul class="uploadPdt_batch_main">
+                        <li class="uploadPdt_batch_up">
+                            <div class="uploadPdt_batch_btn up"><span class="up"></span>上传文件</div>
+                            <div class="tips">* 请上传（.xls）格式文件，单个文件大小不超过10M</div>
+                        </li>
+                        <li class="uploadPdt_batch_down">
+                            <div class="uploadPdt_batch_btn down"><span class="down"></span>下载表格样式</div>
+                            <div class="tips">* 请严格按照样式表格整理款式数据，以免造成数据混乱</div>
+                        </li>
+                    </ul>
+                </div>
+                <div class="uploadPdt_batch_tips">
+                    <h4 class="uploadPdt_batch_title">详细说明</h4>
+                    <ul class="uploadPdt_batch_tips_main">
+                        <li>1.请使用Firefox/Chrome/Safari等高级浏览器打开此页面并上传自有库存。每次上传都将清空原先的旧数据。</li>
+                        <li>2.文件保存格式为：.xls（即excel中的97-2003格式）。文件命名不能带有中文字符，正确格式名如：yisiman.xls。</li>
+                        <li>3.文件内容必须严格按照规定格式填写(可下载”表格样式表“，并参照下图”表头格式"),否则可能导致上传失败。</li>
+                        <li>4.自有库存折扣同样遵循网站管理员设置的折扣规则。如上传的表格中某颗石头折扣为20%，网站管理员设置普通会员VIP的折扣加点为5，则普通会员看到的折扣为25%。</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="loading_box">
+        上传进度：
+        <div class="loading_bar"></div>
+        <div class="loading_text"></div>
+    </div>
+</template>
+
+<!-- 编辑产品 -->
+<template id="editPdt_page">
+    <div class="main white">
+        <div class="uploadPdt_box">
+            <!-- 页面顶部 -->
+            <div class="topMenu">
+                <topmenu :user-name="赖安娜"></topmenu>
+                <div class="topMenu_back" onclick="goBack()">
+                    <span class="topMenu_backIcon"></span>返回上一层</div>
+            </div>
+            <!-- 页面主体 -->
+            <div class="uploadPdt_main editPdt_main">
+                <div class="uploadPdt_item clearfix">
+                    <div class="uploadPdt_title">
+                        <span class="red">*</span> 产品类型</div>
+                    <div class="uploadPdt_content">
+                        <ul class="choose_box clearfix">
+                            <li class="choose_item" :class="{active:select.goods_mode.current == p.val}" v-for="p in select.goods_mode.database" @click="_chooseGoodsMode(p.val)">
+                                <span class="choose_icon"></span>{{p.name}}
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="uploadPdt_item clearfix">
+                    <div class="uploadPdt_title">
+                        <span class="red">*</span> 分类</div>
+                    <div class="uploadPdt_content">
+                        <div class="select_box select_box2" :class="{active:select.category_id1.active}">
+                            <span @click="select.category_id1.active = !select.category_id1.active">{{select.category_id1.current | eachItem 'category_id1'}}</span>
+                            <ul class="select_option" v-show="select.category_id1.active">
+                                <li v-for="p in select.category_id1.database" @click="_chooseSelect('category_id1',p.val)">{{p.name}}</li>
+                            </ul>
+                        </div>
+                        <div class="select_box select_box2" :class="{active:select.category_id2.active}">
+                            <span @click="select.category_id2.active = !select.category_id2.active">{{select.category_id2.current | eachItem 'category_id2'}}</span>
+                            <ul class="select_option" v-show="select.category_id2.active">
+                                <li v-for="p in select.category_id2.database" @click="_chooseSelect('category_id2',p.val)">{{p.name}}</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <div class="uploadPdt_other clearfix">
+                    <div class="uploadPdt_item left clearfix">
+                        <div class="uploadPdt_title">
+                            <span class="red">*</span> 款号</div>
+                        <div class="uploadPdt_content">
+                            <input class="uploadInput" type="text" v-model="base.param.style_no" placeholder="请输入款号">
+                        </div>
+                    </div>
+                    <div class="uploadPdt_item left clearfix" v-show="select.goods_mode.current != 1">
+                        <div class="uploadPdt_title">
+                            <span class="red">*</span> 货号</div>
+                        <div class="uploadPdt_content">
+                            <input class="uploadInput" type="text" v-model="base.param.goods_no" placeholder="请输入货号">
+                        </div>
+                    </div>
+                </div>
+                <div class="uploadPdt_item clearfix">
+                    <div class="uploadPdt_title">
+                        <span class="red">*</span> 品名</div>
+                    <div class="uploadPdt_content">
+                        <input class="uploadInput l" type="text" v-model="base.param.goods_name" placeholder="请输入商品名称">
+                    </div>
+                </div>
+                <div class="uploadPdt_item clearfix">
+                    <div class="uploadPdt_title">专区</div>
+                    <div class="uploadPdt_content">
+                        <ul class="uploadPdt_special clearfix">
+                            <li :class="{active:select.special_id.current == p.val}" v-for="p in select.special_id.database" @click="select.special_id.current = p.val">{{p.name}}</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="uploadPdt_item clearfix">
+                    <div class="uploadPdt_title">
+                        <span class="red">*</span> 材质</div>
+                    <div class="uploadPdt_content">
+                        <ul class="check_box clearfix">
+                            <li :class="p.val | eachActive 'material'" v-for="p in select.material.database" @click="_chooseCheck('material',p.val)">
+                                <span class="check_icon"></span>{{p.name}}</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="uploadPdt_item clearfix">
+                    <div class="uploadPdt_title">
+                        <span class="red">*</span> 金重</div>
+                    <div class="uploadPdt_content">
+                        <div class="uploadPdt_gold" :class="{active:base.inputFoucs == 1}">
+                            <span class="left">PT950</span>
+                            <input type="text" v-model="base.param.goldWeigth_pt950" @focus="base.inputFoucs = 1" @blur="base.inputFoucs =''" data-inputFocus="1">
+                            <span class="right">/g</span>
+                        </div>
+                        <div class="uploadPdt_gold" :class="{active:base.inputFoucs == 2}">
+                            <span class="left">18K</span>
+                            <input type="text" v-model="base.param.goldWeigth_18K" @focus="base.inputFoucs = 2" @blur="base.inputFoucs =''" data-inputFocus="2">
+                            <span class="right">/g</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="uploadPdt_item clearfix">
+                    <div class="uploadPdt_title">
+                        <span class="red">*</span> 空托价格</div>
+                    <div class="uploadPdt_content">
+                        <div class="uploadPdt_gold" :class="{active:base.inputFoucs == 3}">
+                            <span class="left">PT950</span>
+                            <input type="text" v-model="base.param.minprice" @focus="base.inputFoucs = 3" @blur="base.inputFoucs =''" data-inputFocus="3">
+                            <span class="right">/元</span>
+                        </div>
+                        <div class="uploadPdt_gold" :class="{active:base.inputFoucs == 4}">
+                            <span class="left">18K</span>
+                            <input type="text" v-model="base.param.maxprice" @focus="base.inputFoucs = 4" @blur="base.inputFoucs =''" data-inputFocus="4">
+                            <span class="right">/元</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="uploadPdt_item clearfix" v-show="select.category_id2.current != 4">
+                    <div class="uploadPdt_title">
+                        <span class="red">*</span>{{(select.category_id2.current==6||select.category_id2.current==7)?" 链长":" 手寸"}}</div>
+                    <div class="uploadPdt_content">
+                        <input class="uploadInput l" type="text" v-model="base.param.goods_size">
+                        <span class="tips" v-show="base.tipsShow">（系统默认手寸为8#-28#，多个尺寸用"/"隔开，例如：8 / 9 / 10）</span>
+                    </div>
+                </div>
+                <div class="uploadPdt_item clearfix">
+                    <div class="uploadPdt_title">镶口</div>
+                    <div class="uploadPdt_content">
+                        <input class="uploadInput l" type="text" v-model="base.param.s_weight">
+                        <span class="tips" v-show="base.tipsShow">（系统默认镶口，多个镶口用","隔开，例如：0.3ct，0.5ct）</span>
+                    </div>
+                </div>
+                <div class="uploadPdt_item clearfix">
+                    <div class="uploadPdt_title">主石形状</div>
+                    <div class="uploadPdt_content">
+                        <ul class="choose_box clearfix">
+                            <li class="choose_item s" :class="{active:select.stone_shape.current == p.val}" v-for="p in select.stone_shape.database"
+                                @click="select.stone_shape.current = p.val">
+                                <span class="choose_icon"></span>{{p.name}}
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="uploadPdt_other clearfix" v-show="select.goods_mode.current == 2">
+                    <div class="uploadPdt_item left clearfix">
+                        <div class="uploadPdt_title">主石种类</div>
+                        <div class="uploadPdt_content">
+                            <input class="uploadInput" type="text" v-model="base.param.stone_type" placeholder="请输入主石种类">
+                        </div>
+                    </div>
+                    <div class="uploadPdt_item left clearfix">
+                        <div class="uploadPdt_title">主石重量</div>
+                        <div class="uploadPdt_content">
+                            <input class="uploadInput" type="text" v-model="base.param.stone_weight" placeholder="请输入主石重量">
+                            <span class="rightIn">/Ct</span>
+                        </div>
+                    </div>
+                    <div class="uploadPdt_item left clearfix">
+                        <div class="uploadPdt_title">颜色/净度</div>
+                        <div class="uploadPdt_content">
+                            <input class="uploadInput" type="text" v-model="base.param.stone_clarity" placeholder="请输入主石颜色/净度">
+                            <span class="tips" v-show="base.tipsShow">（颜色与净度之间用"/"隔开，例如：H / VVS1）</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="uploadPdt_other clearfix">
+                    <div class="uploadPdt_destone left" v-for="p in base.param.destone_type">
+                        <div class="uploadPdt_item left clearfix">
+                            <div class="uploadPdt_title">副石种类</div>
+                            <div class="uploadPdt_content">
+                                <input class="uploadInput" type="text" v-model="p.type" placeholder="请输入副石种类">
+                            </div>
+                        </div>
+                        <div class="uploadPdt_item left clearfix">
+                            <div class="uploadPdt_title">副石重量</div>
+                            <div class="uploadPdt_content">
+                                <input class="uploadInput" type="text" v-model="p.weight" placeholder="请输入副石重量">
+                                <span class="rightIn">/Ct</span>
+                            </div>
+                        </div>
+                        <div class="uploadPdt_item left clearfix">
+                            <div class="uploadPdt_title">副石数量</div>
+                            <div class="uploadPdt_content">
+                                <input class="uploadInput" type="text" v-model="p.num" placeholder="请输入副石数量">
+                                <span class="rightIn">/颗</span>
+                            </div>
+                        </div>
+                        <span class="removeImg removeDestone" @click="_removeImg('destone_type',$index)" v-if="$index"></span>
+                    </div>
+                    <div class="uploadPdt_addBtn left" @click="_addDestone()" v-show="select.goods_mode.current == 2"><span class="add"></span>添加副石规格</div>
+                </div>
+                <div class="uploadPdt_other clearfix" v-show="select.goods_mode.current == 2">
+                    <div class="uploadPdt_item left clearfix uploadPdt_item_cert">
+                        <div class="uploadPdt_title">证书</div>
+                        <div class="uploadPdt_content uploadPdt_cert">
+                            <div class="uploadPdt_cert" v-for="p in base.param.cert_no">
+                                <div class="select_box select_box2" :class="{active:select.cert.active}" @click="select.cert.active = !select.cert.active">
+                                    {{p.cert | eachItem 'cert'}}
+                                    <ul class="select_option" v-show="select.cert.active">
+                                        <li v-for="b in select.cert.database" @click="p.cert = b.val">{{b.name}}</li>
+                                    </ul>
+                                </div>
+                                <input class="uploadInput" type="text" v-model="p.cert_no" placeholder="请输入证书编号">
+                                <span class="removeImg removeOther" @click="_removeImg('cert_no',$index)" v-if="$index"></span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="uploadPdt_addBtn left" @click="_addCert()">
+                        <span class="add"></span>添加证书</div>
+                </div>
+                <div class="uploadPdt_other clearfix">
+                    <div class="uploadPdt_item l left clearfix">
+                        <div class="uploadPdt_title">
+                            <span class="red">*</span> 款式图片</div>
+                        <div class="uploadPdt_content">
+                            <div class="uploadPdt_imgBox l">
+                                <div>
+                                    <div class="uploadPdt_imgBox_btn">
+                                        点击上传
+                                        <input multiple type="file" @change="_selectBanner($event.currentTarget.files,'goods_pic_all')" v-if="base.param.goods_pic_all.length!=6">
+                                    </div>
+                                    <span class="tips">（最佳尺寸320*300PX；最多可上传6张图片，缩略图自动选择第一张呈现）</span>
+                                </div>
+                                <ul class="uploadPdt_imgBox_main clearfix">
+                                    <li v-for="p in 6">
+                                        <img src="img/index/noImg.png" v-if="!base.param.goods_pic_all[p]">
+                                        <img :src="base.param.goods_pic_all[p]  | eachImage" v-if="base.param.goods_pic_all[p]">
+                                        <span class="removeImg" @click="_removeImg('goods_pic_all',$index)" v-if="base.param.goods_pic_all[p]"></span>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="uploadPdt_item l left clearfix">
+                        <div class="uploadPdt_title">视频拍摄</div>
+                        <div class="uploadPdt_content">
+                            <div class="uploadPdt_imgBox">
+                                <div>
+                                    <div class="uploadPdt_imgBox_btn">
+                                        点击上传
+                                        <input  type="file" @change="_selectBanner($event.currentTarget.files,'goods_video')">
+                                    </div>
+                                    <span class="tips">（大小不超过30M）</span>
+                                </div>
+                                <ul class="uploadPdt_imgBox_main clearfix">
+                                    <li>
+                                        <img src="img/index/noImg.png" v-if="!base.param.goods_video">
+                                        <video :src="base.param.goods_video" controls="controls" v-if="base.param.goods_video">您的浏览器不支持 video 标签。</video>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="uploadPdt_other clearfix">
+                    <div class="uploadPdt_item left clearfix">
+                        <div class="uploadPdt_title">供应商/品牌</div>
+                        <div class="uploadPdt_content">
+                            <input class="uploadInput" type="text" v-model="base.param.factory" placeholder="请输入供应商/品牌">
+                        </div>
+                    </div>
+                    <div class="uploadPdt_item left clearfix">
+                        <div class="uploadPdt_title">供应商/品牌款号</div>
+                        <div class="uploadPdt_content">
+                            <input class="uploadInput" type="text" v-model="base.param.factory_no" placeholder="请输入供应商/品牌款号">
+                        </div>
+                    </div>
+                </div>
+                <div class="uploadPdt_other clearfix">
+                    <div class="uploadPdt_item left clearfix">
+                        <div class="uploadPdt_title">呈现区域</div>
+                        <div class="uploadPdt_content">
+                            <ul class="choose_box clearfix">
+                                <li class="choose_item m" :class="{active:select.style_region.current == p.val}" v-for="p in select.style_region.database"
+                                    @click="select.style_region.current = p.val">
+                                    <span class="choose_icon"></span>{{p.name}}
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="uploadPdt_item left clearfix">
+                        <div class="uploadPdt_title">银版</div>
+                        <div class="uploadPdt_content">
+                            <ul class="choose_box clearfix">
+                                <li class="choose_item" :class="{active:select.style_sort.current == p.val}" v-for="p in select.style_sort.database" @click="select.style_sort.current = p.val">
+                                    <span class="choose_icon"></span>{{p.name}}
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="uploadPdt_item left clearfix">
+                        <div class="uploadPdt_title">推荐款式</div>
+                        <div class="uploadPdt_content">
+                            <ul class="check_box clearfix">
+                                <li :class="p.val | eachActive 'goods_new'" v-for="p in select.goods_new.database" @click="_chooseCheck('goods_new',p.val)">
+                                    <span class="check_icon"></span>{{p.name}}
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <div class="uploadPdt_other clearfix">
+                    <div class="uploadPdt_item left clearfix">
+                        <div class="uploadPdt_title">爪型</div>
+                        <div class="uploadPdt_content">
+                            <ul class="choose_box clearfix">
+                                <li class="choose_item m" :class="{active:select.style_claw.current == p.val}" v-for="p in select.style_claw.database"
+                                    @click="select.style_claw.current = p.val">
+                                    <span class="choose_icon"></span>{{p.name}}
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <div class="uploadPdt_other clearfix">
+                    <div class="uploadPdt_item left clearfix">
+                        <div class="uploadPdt_title">镶口方式</div>
+                        <div class="uploadPdt_content">
+                            <ul class="choose_box clearfix">
+                                <li class="choose_item m" :class="{active:select.scoop_type.current == p.val}" v-for="p in select.scoop_type.database"
+                                    @click="select.scoop_type.current = p.val">
+                                    <span class="choose_icon"></span>{{p.name}}
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <div class="uploadPdt_other clearfix">
+                    <div class="uploadPdt_item left clearfix">
+                        <div class="uploadPdt_title">展示区域</div>
+                        <div class="uploadPdt_content">
+                            <ul class="check_box clearfix">
+                                <li :class="p.val | eachActive 'show_region'" v-for="p in select.show_region.database" @click="_chooseCheckRegion('show_region',p.val)">
+                                    <span class="check_icon"></span>{{p.name}}
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <div class="uploadPdt_item clearfix">
+                    <div class="uploadPdt_title">款式关键字</div>
+                    <div class="uploadPdt_content">
+                        <!-- <ul class="uploadPdt_keyword clearfix">
+                            <li class="uploadPdt_keyword_item" :class="{active:select.key_name.current == p.val}" v-for="p in select.key_name.database">
+                                <div contenteditable="true" @click="select.key_name.current = p.val">{{p.name}}<span class="removeWord" @click="_removeKeyword($index)" @blur="select.key_name.currentEdit =''"></span></div>
+                            </li>
+                        </ul> -->
+                        <input class="uploadInput" type="text" v-model="select.key_name.current | eachSize" placeholder="请输入关键字，多个关键字用','隔开" style="width:1080px;">
+                    </div>
+                </div>
+                <div class="uploadPdt_item l clearfix">
+                    <div class="uploadPdt_title">款式描述（FAB）</div>
+                    <div class="uploadPdt_content">
+                        <textarea class="uploadPdt_textarea" v-model="base.param.goods_content"></textarea>
+                    </div>
+                </div>
+                <ul class="uploadPdt_btn">
+                    <li class="reset" onclick="goBack()">返回</li>
+                    <li class="save" @click="_save()">修改</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</template>
+
+<!-- 现货列表 -->
+<template id="finishedGoods_page">
+    <div class="main white">
+        <div class="finishedGoods_main">
+            <!-- 顶部 -->
+            <div class="topMenu">
+                <topmenu :user-name="赖安娜"></topmenu>
+                <div class="topMenu_back" onclick="goBack()"><span class="topMenu_backIcon"></span>返回上一层</div>
+            </div>
+            <div class="product_chooseBox clearfix">
+                <ul class="product_rightBtn product_configure clearfix">
+                    <li class="active" @click="_toAddGoods()">
+                        <span class="rightBtnIcon add"></span>添加
+                    </li>
+                    <!--<li @click="_productDel()" :class="{active:base.rightBtn == 4}">-->
+                        <!--<span class="rightBtnIcon del"></span>删除-->
+                    <!--</li>-->
+                </ul>
+                <div class="finishedGoods_head">款号：{{dataList.style_no}};品名：{{dataList.goods_name}}</div>
+                <div class="product_total finishedGoods_total">共 <span class="red">{{dataList.totalrecord}}</span> 件款式产品</div>
+            </div>
+            <!-- 页面主体 -->
+            <div class="product_main clearfix">
+                <table class="product_table finishedGoods_table">
+                    <thead>
+                        <tr>
+                            <!--<th width="5%">-->
+                                <!--<span class="table_check"></span>-->
+                            <!--</th>-->
+                            <th>货号</th>
+                            <th width="30%">裸石参数</th>
+                            <th width="24%">戒托参数</th>
+                            <th>操作时间</th>
+                            <th>操作员</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr v-for="p in dataList.list">
+                            <!--<td>-->
+                                <!--<span class="table_check"></span>-->
+                            <!--</td>-->
+                            <td>{{p.style_goods_no}}</td>
+                            <td class="finishedGoods_param clearfix">
+                                <span>形状：{{'stone_shape' | eachItem p}}</span>
+                                <span>种类：{{'stone_type' | eachItem p}}</span>
+                                <span>颜色/净度：{{'stone_clarity' | eachItem p}}</span>
+                                <span>副石种类：{{'destone_type1' | eachItem p}}</span>
+                                <span>副石重量：{{'destone_type2' | eachItem p}}</span>
+                                <span>副石数量：{{'destone_type3' | eachItem p}}颗</span>
+                            </td>
+                            <td class="finishedGoods_param2 clearfix">
+                                <span>材质：{{'material' | eachItem p}}</span>
+                                <span>金重：{{'goldWeigth_18K' | eachItem p}}</span>
+                                <span>尺寸：{{'goods_size' | eachItem p}}#</span>
+                                <span>镶口：{{'s_weight' | eachItem p}}</span>
+                            </td>
+                            <td>{{p.edittime | formatDate}}</td>
+                            <td>{{p.adduid}}</td>
+                            <td>
+                                <!--<span class="table_del" @click="_toEditGoods(p)"></span>-->
+                                <span class="table_edit" @click="_productDel(p.id)"></span>
+                            </td>
+                        </tr>
+                        <!--<tr v-show="base.basicConfigureDetail == '1'" v-for="p in 5">-->
+                            <!--<td>-->
+                                <!--<span class="table_check"></span>-->
+                            <!--</td>-->
+                            <!--<td>——1-1</td>-->
+                            <!--<td @click="base.basicConfigureDetail = '1'">-</td>-->
+                            <!--<td>钻石</td>-->
+                            <!--<td>-</td>-->
+                            <!--<td>2017-11-28 17:26:29</td>-->
+                            <!--<td>admin</td>-->
+                            <!--<td>-->
+                                <!--<span class="table_ok"></span>-->
+                            <!--</td>-->
+                            <!--&lt;!&ndash; <td><span class="table_error"></span></td> &ndash;&gt;-->
+                            <!--<td>666-->
+                                <!--<span class="table_edit"></span>-->
+                                <!--<span class="table_del"></span>-->
+                            <!--</td>-->
+                        <!--</tr>-->
+                    </tbody>
+                </table>
+                <div class="no_data" v-show="base.showNoDataTips">暂无相关数据</div>
+                <!-- 分页 -->
+                <pagination :show-pages="5" :cur-page=" currentPages " :total-pages="dataList.totalpage" ref="pagination" v-if="dataList.totalpage>0"></pagination>
+            </div>
+        </div>
+    </div>
+    <!-- 弹出框 -->
+    <div class="modal fade finishedGoods_del" tabindex="-1" role="dialog">
+        <div class="pop-container min">
+            <div class="product_modal">
+                <div class="product_modalHead">确定要删除该产品吗？</div>
+                <div class="product_modalContent">删除产品后将删除所有数据，如需正常显示请保留！</div>
+                <ul class="product_modalBtn">
+                    <li class="sure" @click="_productDelpro()">确定</li>
+                    <li data-dismiss="modal">取消</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</template>
+
+<!-- 添加现货 -->
+<template id="addGoods_page">
+    <div class="main white">
+        <div class="uploadPdt_box">
+            <!-- 页面顶部 -->
+            <div class="topMenu">
+                <topmenu :user-name="赖安娜"></topmenu>
+                <div class="topMenu_back" onclick="goBack()">
+                    <span class="topMenu_backIcon"></span>返回上一层</div>
+            </div>
+            <!-- 页面主体 -->
+            <div class="uploadPdt_main addGoods_main">
+                <div class="uploadPdt_other clearfix">
+                    <div class="uploadPdt_item left clearfix">
+                        <div class="uploadPdt_title">
+                            <span class="red">*</span> 款号</div>
+                        <div class="uploadPdt_content">
+                            <input class="uploadInput" type="text" v-model="base.param.style_goods_no" readonly>
+                        </div>
+                    </div>
+                    <div class="uploadPdt_item left clearfix">
+                        <div class="uploadPdt_title">
+                            <span class="red">*</span> 货号</div>
+                        <div class="uploadPdt_content">
+                            <input class="uploadInput" type="text" v-model="base.param.goods_no" placeholder="请输入货号">
+                        </div>
+                    </div>
+                </div>
+                <div class="uploadPdt_item clearfix">
+                    <div class="uploadPdt_title">
+                        <span class="red">*</span> 品名</div>
+                    <div class="uploadPdt_content">
+                        <input class="uploadInput l" type="text" v-model="base.param.goods_name" placeholder="请输入商品名称">
+                    </div>
+                </div>
+                <div class="uploadPdt_item clearfix">
+                    <div class="uploadPdt_title">
+                        <span class="red">*</span> 材质</div>
+                    <div class="uploadPdt_content">
+                        <ul class="check_box clearfix">
+                            <li :class="p.val | eachActive 'material'" v-for="p in select.material.database" @click="_chooseCheck('material',p.val)">
+                                <span class="check_icon"></span>{{p.name}}</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="uploadPdt_item clearfix">
+                    <div class="uploadPdt_title">
+                        <span class="red">*</span> 金重</div>
+                    <div class="uploadPdt_content">
+                        <div class="uploadPdt_gold" :class="{active:base.inputFoucs == 1}">
+                            <span class="left">PT950</span>
+                            <input type="text" v-model="base.param.goldWeigth_pt950" @focus="base.inputFoucs = 1" @blur="base.inputFoucs =''" data-inputFocus="1">
+                            <span class="right">/g</span>
+                        </div>
+                        <div class="uploadPdt_gold" :class="{active:base.inputFoucs == 2}">
+                            <span class="left">18K</span>
+                            <input type="text" v-model="base.param.goldWeigth_18K" @focus="base.inputFoucs = 2" @blur="base.inputFoucs =''" data-inputFocus="2">
+                            <span class="right">/g</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="uploadPdt_item clearfix">
+                    <div class="uploadPdt_title">
+                        <span class="red">*</span> 成品价格</div>
+                    <div class="uploadPdt_content">
+                        <div class="uploadPdt_gold" :class="{active:base.inputFoucs == 3}">
+                            <span class="left">PT950</span>
+                            <input type="text" v-model="base.param.minprice" @focus="base.inputFoucs = 3" @blur="base.inputFoucs =''" data-inputFocus="3">
+                            <span class="right">/元</span>
+                        </div>
+                        <div class="uploadPdt_gold" :class="{active:base.inputFoucs == 4}">
+                            <span class="left">18K</span>
+                            <input type="text" v-model="base.param.maxprice" @focus="base.inputFoucs = 4" @blur="base.inputFoucs =''" data-inputFocus="4">
+                            <span class="right">/元</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="uploadPdt_item clearfix" v-show="base.param.category_id2 != 4">
+                    <div class="uploadPdt_title">
+                        <span class="red">*</span>{{(base.param.category_id2==6||base.param.category_id2==7)?" 链长":" 手寸"}}</div>
+                    <div class="uploadPdt_content">
+                        <input class="uploadInput l" type="text" v-model="base.param.goods_size">
+                    </div>
+                </div>
+                <div class="uploadPdt_item clearfix">
+                    <div class="uploadPdt_title">镶口</div>
+                    <div class="uploadPdt_content">
+                        <input class="uploadInput l" type="text" v-model="base.param.s_weight">
+                    </div>
+                </div>
+                <div class="uploadPdt_item clearfix">
+                    <div class="uploadPdt_title">主石形状</div>
+                    <div class="uploadPdt_content">
+                        <ul class="choose_box clearfix">
+                            <li class="choose_item s" :class="{active:select.stone_shape.current == p.val}" v-for="p in select.stone_shape.database"
+                                @click="select.stone_shape.current = p.val">
+                                <span class="choose_icon"></span>{{p.name}}
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+                <!--v-show="select.goods_mode.current == 2"-->
+                <div class="uploadPdt_other clearfix" >
+                    <div class="uploadPdt_item left clearfix">
+                        <div class="uploadPdt_title">主石种类</div>
+                        <div class="uploadPdt_content">
+                            <input class="uploadInput" type="text" v-model="base.param.stone_type" placeholder="请输入主石种类">
+                        </div>
+                    </div>
+                    <div class="uploadPdt_item left clearfix">
+                        <div class="uploadPdt_title">主石重量</div>
+                        <div class="uploadPdt_content">
+                            <input class="uploadInput" type="text" v-model="base.param.stone_weight" placeholder="请输入主石重量">
+                            <span class="rightIn">/Ct</span>
+                        </div>
+                    </div>
+                    <div class="uploadPdt_item left clearfix">
+                        <div class="uploadPdt_title">颜色/净度</div>
+                        <div class="uploadPdt_content">
+                            <input class="uploadInput" type="text" v-model="base.param.stone_clarity" placeholder="请输入主石颜色/净度">
+                            <span class="tips">（颜色与净度之间用"/"隔开，例如：H / VVS1）</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="uploadPdt_other clearfix">
+                    <div class="uploadPdt_destone left" v-for="p in base.param.destone_type">
+                        <div class="uploadPdt_item left clearfix">
+                            <div class="uploadPdt_title">副石种类</div>
+                            <div class="uploadPdt_content">
+                                <input class="uploadInput" type="text" v-model="p.type" placeholder="请输入副石种类">
+                            </div>
+                        </div>
+                        <div class="uploadPdt_item left clearfix">
+                            <div class="uploadPdt_title">副石重量</div>
+                            <div class="uploadPdt_content">
+                                <input class="uploadInput" type="text" v-model="p.weight" placeholder="请输入副石重量">
+                                <span class="rightIn">/Ct</span>
+                            </div>
+                        </div>
+                        <div class="uploadPdt_item left clearfix">
+                            <div class="uploadPdt_title">副石数量</div>
+                            <div class="uploadPdt_content">
+                                <input class="uploadInput" type="text" v-model="p.num" placeholder="请输入副石数量">
+                                <span class="rightIn">/颗</span>
+                            </div>
+                        </div>
+                        <span class="removeImg removeDestone" @click="_removeImg('destone_type',$index)" v-if="$index"></span>
+                    </div>
+                    <div class="uploadPdt_addBtn left" @click="_addDestone()" v-show="select.goods_mode.current == 2">
+                        <span class="add"></span>添加副石规格</div>
+                </div>
+                <div class="uploadPdt_other clearfix" v-show="select.goods_mode.current == 2">
+                    <div class="uploadPdt_item left clearfix uploadPdt_item_cert">
+                        <div class="uploadPdt_title">证书</div>
+                        <div class="uploadPdt_content uploadPdt_cert">
+                            <div class="uploadPdt_cert" v-for="p in base.param.cert_no">
+                                <div class="select_box select_box2" :class="{active:select.cert.active}" @click="select.cert.active = !select.cert.active">
+                                    {{p.cert | eachItem 'cert'}}
+                                    <ul class="select_option" v-show="select.cert.active">
+                                        <li v-for="b in select.cert.database" @click="p.cert = b.val">{{b.name}}</li>
+                                    </ul>
+                                </div>
+                                <input class="uploadInput" type="text" v-model="p.cert_no" placeholder="请输入证书编号">
+                                <span class="removeImg removeOther" @click="_removeImg('cert_no',$index)" v-if="$index"></span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="uploadPdt_addBtn left" @click="_addCert()">
+                        <span class="add"></span>添加证书</div>
+                </div>
+                <div class="uploadPdt_other clearfix">
+                    <div class="uploadPdt_item l left clearfix">
+                        <div class="uploadPdt_title">
+                            <span class="red">*</span> 款式图片</div>
+                        <div class="uploadPdt_content">
+                            <div class="uploadPdt_imgBox l">
+                                <div>
+                                    <div class="uploadPdt_imgBox_btn">
+                                        点击上传
+                                        <input multiple type="file" @change="_selectBanner($event.currentTarget.files,'goods_pic_all')" v-if="base.param.goods_pic_all.length!=6">
+                                    </div>
+                                    <span class="tips">（最佳尺寸700*700PX；最多可上传6张图片，缩略图自动选择第一张呈现）</span>
+                                </div>
+                                <ul class="uploadPdt_imgBox_main clearfix">
+                                    <li v-for="p in 6">
+                                        <img src="img/index/noImg.png" v-if="!base.param.goods_pic_all[p]">
+                                        <img :src="base.param.goods_pic_all[p] | eachImage" v-if="base.param.goods_pic_all[p]">
+                                        <span class="removeImg" @click="_removeImg('goods_pic_all',$index)" v-if="base.param.goods_pic_all[p]"></span>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="uploadPdt_item l left clearfix">
+                        <div class="uploadPdt_title">视频拍摄</div>
+                        <div class="uploadPdt_content">
+                            <div class="uploadPdt_imgBox">
+                                <div>
+                                    <div class="uploadPdt_imgBox_btn">
+                                        点击上传
+                                        <input type="file" @change="_selectBanner($event.currentTarget.files,'goods_video')">
+                                    </div>
+                                    <span class="tips">（大小不超过30M）</span>
+                                </div>
+                                <ul class="uploadPdt_imgBox_main clearfix">
+                                    <li>
+                                        <img src="img/index/noImg.png" v-if="!base.param.goods_video">
+                                        <video :src="base.param.goods_video" controls="controls" v-if="base.param.goods_video">您的浏览器不支持 video 标签。</video>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="uploadPdt_other clearfix">
+                    <div class="uploadPdt_item left clearfix">
+                        <div class="uploadPdt_title">供应商/品牌</div>
+                        <div class="uploadPdt_content">
+                            <input class="uploadInput" type="text" v-model="base.param.factory" placeholder="请输入供应商/品牌">
+                        </div>
+                    </div>
+                    <div class="uploadPdt_item left clearfix">
+                        <div class="uploadPdt_title">供应商/品牌款号</div>
+                        <div class="uploadPdt_content">
+                            <input class="uploadInput" type="text" v-model="base.param.factory_no" placeholder="请输入供应商/品牌款号">
+                        </div>
+                    </div>
+                </div>
+                <div class="uploadPdt_item clearfix">
+                    <div class="uploadPdt_title">款式关键字</div>
+                    <div class="uploadPdt_content">
+                        <!-- <ul class="uploadPdt_keyword clearfix">
+                            <li class="uploadPdt_keyword_item" :class="{active:select.key_name.current == p.val}" v-for="p in select.key_name.database">
+                                <div contenteditable="true" @click="select.key_name.current = p.val">{{p.name}}<span class="removeWord" @click="_removeKeyword($index)" @blur="select.key_name.currentEdit =''"></span></div>
+                            </li>
+                        </ul> -->
+                        <input class="uploadInput" type="text" v-model="select.key_name.current" placeholder="请输入关键字，多个关键字用','隔开" style="width:1080px;">
+                    </div>
+                </div>
+                <div class="uploadPdt_item l clearfix">
+                    <div class="uploadPdt_title">款式描述（FAB）</div>
+                    <div class="uploadPdt_content">
+                        <textarea class="uploadPdt_textarea" v-model="base.param.goods_content"></textarea>
+                    </div>
+                </div>
+                <ul class="uploadPdt_btn">
+                    <li class="reset" @click="_reset()">重置</li>
+                    <li class="save" @click="_save()">保存</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</template>
+
+<!-- 设备列表 -->
+<template id="equipment_page">
+    <div class="main white">
+        <div class="equipment_main"></div>
+    </div>
+    <!-- 弹出框 -->
+    <div class="modal fade activity_add" tabindex="-1" role="dialog">
+        <div class="pop-container normal">
+            <div class="pop-header clearfix">
+                <div class="pop-header-img">
+                    <img src="" alt="">
+                </div>
+                添加活动
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+            </div>
+            <div class="pop-body"></div>
+        </div>
+    </div>
+</template>
+
+<!-- 订单中心 -->
+<template id="order_page">
+    <div class="main white">
+        <div class="order_main"></div>
+    </div>
+    <!-- 弹出框 -->
+    <div class="modal fade activity_add" tabindex="-1" role="dialog">
+        <div class="pop-container normal">
+            <div class="pop-header clearfix">
+                <div class="pop-header-img">
+                    <img src="" alt="">
+                </div>
+                添加活动
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+            </div>
+            <div class="pop-body"></div>
+        </div>
+    </div>
+</template>
+
+<!--
+<template id="activity_page">
+    <div class="main white">
+        <div class="activity_main"></div>
+    </div>
+    弹出框
+    <div class="modal fade activity_add" tabindex="-1" role="dialog">
+        <div class="pop-container normal">
+            <div class="pop-header clearfix">
+                <div class="pop-header-img">
+                    <img src="" alt="">
+                </div>
+                添加活动
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+            </div>
+            <div class="pop-body"></div>
+        </div>
+    </div>
+</template>
+-->

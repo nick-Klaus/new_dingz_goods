@@ -1,0 +1,140 @@
+﻿<!doctype html>
+<html lang="en">
+<head>
+    <meta name="content-type" content="text/html" charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1,  minimum-scale=1, maximum-scale=1, user-scalable=no" />
+    <title></title>
+    <link rel="stylesheet" href="css/animation.css">
+    <link rel="stylesheet" href="css/default.css">
+    <script src="js/jquery-1.10.2.min.js"></script>
+    <script src="js/vue.min.js"></script>
+    <script src="js/vue-resource.js" type="text/javascript"></script>
+    <script src="layui/lay/dest/layui.all.js"></script>
+</head>
+
+<body id="app-body">
+
+<!-- <div class="login_page"> -->
+    <div class="login_box">
+        <div class="login_left">
+            <ul class="login_logo">
+                <li class="login_logo_img"><img src="img/login/logo.png" alt=""></li>
+                <li class="login_name">数据管理后台</li>
+            </ul>
+        </div>
+        <div class="login_right">
+            <div class="login_right_box">
+                <h4 class="login_title">登录</h4>
+                <ul class="login_main">
+                    <li class="login_item active"><span class="login_user"></span><input type="text" value="Sunny"></li>
+                    <li class="login_item"><span class="login_psd"></span><input type="text" placeholder="请输入您的密码"></li>
+                    <li class="login_rmb"><span class="login_rmb_icon"></span>记住密码</li>
+                    <li class="login_btn active">登录</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+<!-- </div> -->
+
+</body>
+<script>
+
+(function(){
+
+    var main = new Vue({
+        el : "#app-body",
+        data : {
+            "auto" : false,
+            "userMsg":{
+                "username":'',
+                "password":'',
+                "remember":false,
+            }
+        },
+        watch : {},
+        methods : {
+            _userLogin:function(){
+                var _this = this;
+                if(_this.userMsg.remember){
+                    console.log(00,_this.userMsg.username);
+                    window.localStorage.setItem('hhr_userName',_this.userMsg.username);
+                    window.localStorage.setItem('hhr_password',_this.userMsg.password);
+                    window.localStorage.setItem('hhr_autoLogin',_this.auto);
+                }else{
+                    window.localStorage.removeItem('hhr_userName');
+                    window.localStorage.removeItem('hhr_password');
+                    window.localStorage.removeItem('hhr_autoLogin');
+                }
+                var data = {};
+                data.accountno = _this.userMsg.username;
+                data.password = _this.userMsg.password;
+                console.log(data);
+                var url = "http://ssm.echao.com:8081/shopowner/login";
+                _this.$http.post(url, data ,{emulateJSON:true}).then(function(response){
+                    var result = response.body;
+                    console.log(3,result);
+                    if( result.error_code == 0 ){
+                        sessionStorage.setItem("nickname",response.data.data[0].nickname);
+                        sessionStorage.setItem("headimgurl",response.data.data[0].headimgurl);
+                        sessionStorage.setItem("user_id",response.data.data[0].id);
+                        sessionStorage.setItem("manager_id",response.data.data[0].manager_id);
+                        sessionStorage.setItem("shopowner_id",response.data.data[0].shopowner_id);
+                        sessionStorage.setItem("clerk_id",response.data.data[0].clerk_id);
+                        sessionStorage.setItem("prolocutor_id",response.data.data[0].prolocutor_id);
+                        sessionStorage.setItem("is_manager",response.data.data[0].is_manager);
+                        window.location.href='index.html';
+                    }else {
+                        layer.msg(result.error_msg,{icon:0});
+                    }
+                }, function(response){
+                    if( response.status == 408 ){
+                        layer.msg(response.statusText,{icon:0});
+                    } else {
+                        layer.msg('出错了',{icon:2});
+                    }
+                });
+            },
+            _enterKeyLogin:function(event){
+                var _this=this;
+                if (event.keyCode === 13) {
+                    _this._userLogin();
+                }
+            },
+        },
+        ready : function(){
+            var _this = this;
+//            _this.auto=window.localStorage.getItem('hhr_autoLogin');
+//            _this.userMsg.remember=_this.auto?1:0;
+            _this.userMsg.username=window.localStorage.getItem('hhr_username');
+            _this.userMsg.password=window.localStorage.getItem('hhr_password');
+            console.log(_this.auto);
+            console.log(_this.userMsg);
+            if(_this.auto){
+                setTimeout(function(){
+                    _this._userLogin();
+                },300);
+            }
+        }
+    });
+
+})()
+
+//回车向下移动光标
+function focusNextInput(event,thisInput){
+    var inputs = document.getElementsByTagName("input");
+    for(var i = 0;i<inputs.length;i++){
+        if (event.keyCode === 13){
+            if(i==(inputs.length-1)){
+                inputs[0].focus();
+                break;
+            }else if(thisInput == inputs[i]){
+                inputs[i+1].focus();
+                break;
+            }
+        }
+    }
+}
+
+</script>
+
+</html>
